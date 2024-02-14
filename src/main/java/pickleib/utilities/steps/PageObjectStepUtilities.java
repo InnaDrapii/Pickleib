@@ -1,13 +1,12 @@
 package pickleib.utilities.steps;
 
+import lombok.Getter;
 import org.openqa.selenium.WebElement;
 import pickleib.driver.DriverFactory;
-import pickleib.mobile.driver.PickleibAppiumDriver;
 import pickleib.mobile.interactions.MobileInteractions;
 import pickleib.utilities.interfaces.PolymorphicUtilities;
 import pickleib.utilities.element.ElementAcquisition;
 import pickleib.utilities.interfaces.repository.PageRepository;
-import pickleib.web.driver.PickleibWebDriver;
 import pickleib.web.interactions.WebInteractions;
 import utils.Printer;
 import utils.StringUtilities;
@@ -32,13 +31,11 @@ public class PageObjectStepUtilities<ObjectRepository extends PageRepository> {
 
     public DriverFactory.DriverType defaultPlatform = DriverFactory.DriverType.Web;
     public Printer log = new Printer(this.getClass());
-    private final PolymorphicUtilities webInteractions = new WebInteractions();
-    private final PolymorphicUtilities mobileInteractions = new MobileInteractions();
+    private PolymorphicUtilities webInteractions;
+    private PolymorphicUtilities mobileInteractions;
 
-    ElementAcquisition.PageObjectModel<ObjectRepository> webObjectModel;
-    ElementAcquisition.PageObjectModel<ObjectRepository> mobileObjectModel;
-    ElementAcquisition.Reflections<ObjectRepository> webReflections;
-    ElementAcquisition.Reflections<ObjectRepository> mobileReflections;
+    public ElementAcquisition.PageObjectModel<ObjectRepository> objectRepository;
+    public ElementAcquisition.Reflections<ObjectRepository> reflections;
 
     /**
      * Constructs an instance of the PageObjectStepUtilities class with the specific object repository.
@@ -46,22 +43,14 @@ public class PageObjectStepUtilities<ObjectRepository extends PageRepository> {
      * @param objectRepositoryClass The class of the object repository which will be used to initialize
      *                              the page object model, element interactions, and reflections.
      */
-    public PageObjectStepUtilities(Class<ObjectRepository> objectRepositoryClass) {
+    public PageObjectStepUtilities(Class<ObjectRepository> objectRepositoryClass, boolean useMobileDriver, boolean useWebDriver) {
 
-        webObjectModel = new ElementAcquisition.PageObjectModel<>(
-                PickleibWebDriver.get(),
+        if (useMobileDriver) mobileInteractions = new MobileInteractions();
+        if (useWebDriver) webInteractions = new WebInteractions();
+        objectRepository = new ElementAcquisition.PageObjectModel<>(
                 objectRepositoryClass
         );
-        mobileObjectModel = new ElementAcquisition.PageObjectModel<>(
-                PickleibAppiumDriver.get(),
-                objectRepositoryClass
-        );
-        webReflections = new ElementAcquisition.Reflections<>(
-                PickleibWebDriver.get(),
-                objectRepositoryClass
-        );
-        mobileReflections = new ElementAcquisition.Reflections<>(
-                PickleibAppiumDriver.get(),
+        reflections = new ElementAcquisition.Reflections<>(
                 objectRepositoryClass
         );
     }
@@ -102,46 +91,4 @@ public class PageObjectStepUtilities<ObjectRepository extends PageRepository> {
         }
         return null;
     }
-
-    /**
-     * Retrieves the page object acquisition for the specified driver type.
-     *
-     * @param driverType The type of the driver (Web or Mobile).
-     * @return The page object acquisition for the specified driver type.
-     */
-    public ElementAcquisition.PageObjectModel<ObjectRepository> getAcquisition(DriverFactory.DriverType driverType) {
-        if (!StringUtilities.isBlank(driverType))
-            switch (driverType) {
-                case Web -> {
-                    return webObjectModel;
-                }
-                case Mobile -> {
-                    return mobileObjectModel;
-                }
-            }
-        else return getAcquisition(defaultPlatform);
-        return null;
-    }
-
-    /**
-     * Retrieves the reflections for the specified driver type, which provides a view into the object repository's
-     * structure and elements.
-     *
-     * @param driverType The type of the driver (Web or Mobile).
-     * @return The reflections for the specified driver type.
-     */
-    public ElementAcquisition.Reflections<ObjectRepository> getReflections(DriverFactory.DriverType driverType) {
-        if (!StringUtilities.isBlank(driverType))
-            switch (driverType) {
-                case Web -> {
-                    return webReflections;
-                }
-                case Mobile -> {
-                    return mobileReflections;
-                }
-            }
-        else return getReflections(defaultPlatform);
-        return null;
-    }
-
 }
